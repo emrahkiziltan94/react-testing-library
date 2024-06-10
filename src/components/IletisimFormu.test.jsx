@@ -4,56 +4,128 @@ import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import fs from 'fs';
 import path from 'path';
+import IletisimFormu from './IletisimFormu';
 
 //eksik import buraya
 //fixin tuzağı buraya? detaylar readme dosyasında.
+beforeEach(() => {
+  render(<IletisimFormu />);
+});
 
 test('[1] hata olmadan render ediliyor', () => {
-  expect('kodlarınızı yazınca').toBe('bu assertionı silin!!!');
+  render(<IletisimFormu />);
 });
 
 test('[2] iletişim formu headerı render ediliyor', () => {
   //get by text ile h1 tagini yakalayın
   //to be in the document, to be truthy, to have text content ile kontrol edin.
-  expect('kodlarınızı yazınca').toBe('bu assertionı silin');
+  const header = screen.getByText('İletişim Formu');
+  expect(header).toBeInTheDocument();
+  expect(header).toBeTruthy();
+  expect(header).toHaveTextContent('İletişim Formu');
 });
 
 test('[3] kullanıcı adını 5 karakterden az girdiğinde BİR hata mesajı render ediyor.', async () => {
   //get by label text ile name alanını yakalayınız
   //find all by test id ile error mesajlarını yakalayın
   //to have length ile kontrol edin.
-  expect('kodlarınızı yazınca').toBe('bu assertionı silin');
+  const nameInput = screen.getByLabelText('Ad*');
+  userEvent.type(nameInput, 'abc');
+  // wait for page load.
+  const errorMessages = await screen.findAllByTestId('error');
+  expect(errorMessages).toHaveLength(1);
 });
 
 test('[4] kullanıcı inputları doldurmadığında ÜÇ hata mesajı render ediliyor.', async () => {
   //hiç bir alanı doldurmadan get by role ile butonu yakalayın
   //error mesajlarının to have lengthine bakarak kontrol edin
-  expect('kodlarınızı yazınca').toBe('bu assertionı silin');
+  const submitButton = screen.getByRole('button');
+  userEvent.click(submitButton);
+  const errorMessages = await screen.findAllByTestId('error');
+  expect(errorMessages).toHaveLength(3);
 });
 
 test('[5] kullanıcı doğru ad ve soyad girdiğinde ama email girmediğinde BİR hata mesajı render ediliyor.', async () => {
   //get by test id ile input alanlarını yakalayın
   //error mesajlarının to have lengthine bakarak kontrol edin
-  expect('kodlarınızı yazınca').toBe('bu assertionı silin');
+  const nameInput = screen.getByTestId('name-input');
+  userEvent.type(nameInput, 'emrah emrah');
+
+  const lastNameInput = screen.getByTestId('lastName-input');
+  userEvent.type(lastNameInput, 'test test test');
+
+  const submitButton = screen.getByTestId('submit-button');
+  userEvent.click(submitButton);
+
+  const errorMessages = await screen.findAllByTestId('error');
+
+  expect(errorMessages).toHaveLength(1);
 });
 
 test('[6] geçersiz bir mail girildiğinde "Hata: email geçerli bir email adresi olmalıdır." hata mesajı render ediliyor', async () => {
   //errorı get by test id ile yakalayın
   //to have text content ile hata metnini kontrol edin
-  expect('kodlarınızı yazınca').toBe('bu assertionı silin');
+  const emailInput = screen.getByLabelText('E-mail*');
+  userEvent.type(emailInput, 'emrah');
+  const errorMessages = screen.getByTestId('error');
+
+  await waitFor(() => {
+    expect(errorMessages).toHaveTextContent(
+      'Hata: email geçerli bir email adresi olmalıdır.'
+    );
+  });
 });
 
 test('[7] soyad girilmeden gönderilirse "Hata: soyad gereklidir." mesajı render ediliyor', async () => {
   //find by text ve to be in the document ile hata metni ekranda mı kontrol edin
-  expect('kodlarınızı yazınca').toBe('bu assertionı silin');
+  const submitButton = screen.getByTestId('submit-button');
+  userEvent.click(submitButton);
+  const errorMessage = await screen.findByText('Hata: soyad gereklidir.');
+  expect(errorMessage).toBeInTheDocument();
 });
 
 test('[8] ad, soyad, email render ediliyor. mesaj bölümü doldurulmadığında hata mesajı render edilmiyor.', async () => {
-  expect('kodlarınızı yazınca').toBe('bu assertionı silin');
+  const nameInput = screen.getByTestId('name-input');
+  userEvent.type(nameInput, 'emrah emrah');
+
+  const lastNameInput = screen.getByTestId('lastName-input');
+  userEvent.type(lastNameInput, 'test test test');
+  const emailInput = screen.getByTestId('email-input');
+  userEvent.type(emailInput, 'emrah@workintech.com.tr');
+
+  const submitButton = screen.getByTestId('submit-button');
+  userEvent.click(submitButton);
+
+  const firstnameDisplay = screen.getByTestId('firstnameDisplay');
+  const lastnameDisplay = screen.getByTestId('lastnameDisplay');
+  const emailDisplay = screen.getByTestId('emailDisplay');
+  expect(firstnameDisplay).toBeInTheDocument();
+  expect(lastnameDisplay).toBeInTheDocument();
+  expect(emailDisplay).toBeInTheDocument();
 });
 
 test('[9] form gönderildiğinde girilen tüm değerler render ediliyor.', async () => {
-  expect('kodlarınızı yazınca').toBe('bu assertionı silin');
+  const nameInput = screen.getByTestId('name-input');
+  userEvent.type(nameInput, 'emrah emrah');
+
+  const lastNameInput = screen.getByTestId('lastName-input');
+  userEvent.type(lastNameInput, 'test test test');
+  const emailInput = screen.getByTestId('email-input');
+  userEvent.type(emailInput, 'emrah@workintech.com.tr');
+  const messageInput = screen.getByTestId('message-input');
+  userEvent.type(messageInput, 'emrah fdjkalfşa .com.tr');
+
+  const submitButton = screen.getByTestId('submit-button');
+  userEvent.click(submitButton);
+
+  const firstnameDisplay = screen.getByTestId('firstnameDisplay');
+  const lastnameDisplay = screen.getByTestId('lastnameDisplay');
+  const emailDisplay = screen.getByTestId('emailDisplay');
+  const messageDisplay = screen.getByTestId('messageDisplay');
+  expect(firstnameDisplay).toBeInTheDocument();
+  expect(lastnameDisplay).toBeInTheDocument();
+  expect(emailDisplay).toBeInTheDocument();
+  expect(messageDisplay).toBeInTheDocument();
 });
 
 //
@@ -93,7 +165,7 @@ test('[9] form gönderildiğinde girilen tüm değerler render ediliyor.', async
 //
 const testFile = fs
   .readFileSync(path.resolve(__dirname, './IletisimFormu.test.jsx'), 'utf8')
-  .replaceAll(/(?:\\r\\n|\\r|\\n| )/g, '');
+  .replaceAll(/(?:\r\n|\r|\n| )/g, '');
 const tests = testFile.split("test('[");
 
 test('Kontrol: IletisimFormu componenti import edilmiş.', async () => {
